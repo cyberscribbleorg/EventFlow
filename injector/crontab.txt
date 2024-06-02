@@ -1,0 +1,2 @@
+# Run the inject.py script every 6 hours
+*/15 * * * * /usr/bin/python /app/inject.py >> /var/log/cron.log 2>&1

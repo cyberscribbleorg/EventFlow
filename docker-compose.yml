@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres
+    container_name: my-postgres-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    networks:
+      - superset-net
+
+  superset:
+    build:
+      context: ./superset
+      dockerfile: Dockerfile
+    container_name: superset
+    ports:
+      - "${SUPERSET_PORT}:8088"
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      SECRET_KEY: ${SECRET_KEY}
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL}
+      SUPERSET_PORT: ${SUPERSET_PORT}
+    volumes:
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py
+      - ./superset/requirements.txt:/app/requirements.txt
+    depends_on:
+      - postgres
+    networks:
+      - superset-net
+    command: >
+      bash -c "
+      superset fab create-admin --username ${SUPERSET_ADMIN_USER} --firstname Superset --lastname Admin --email ${SUPERSET_ADMIN_EMAIL} --password ${SUPERSET_ADMIN_PASSWORD} &&
+      superset db upgrade &&
+      superset init &&
+      superset run -p ${SUPERSET_PORT} --with-threads -h 0.0.0.0
+      "
+
+  injector:
+    build:
+      context: ./injector
+      dockerfile: Dockerfile
+    container_name: data-injector
+    volumes:
+      - ./data:/data
+      - ./injector:/app
+    depends_on:
+      - postgres
+    networks:
+      - superset-net
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+    command: ["/app/start-cron.sh"]
+
+networks:
+  superset-net:
+    name: superset-net

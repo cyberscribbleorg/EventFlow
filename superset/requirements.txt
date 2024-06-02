@@ -1,0 +1,4 @@
+flask
+apache-superset
+sqlalchemy
+psycopg2-binary
