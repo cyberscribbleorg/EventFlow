@@ -1,4 +1,5 @@
 import requests
+import os
 
 def get_csrf_token(session, base_url):
     """ Get CSRF token from Superset """
@@ -36,10 +37,10 @@ def create_database(session, base_url):
     # Fetch environment variables
     db_name = os.getenv("DB_NAME", "Default PostgreSQL")
     db_user = os.getenv("DB_USER", "user")
-    db_password = os.getenv("DB_PASSWORD", "password")
+    db_password = os.getenv("DB_PASS", "password")
     db_host = os.getenv("DB_HOST", "localhost")
     db_port = os.getenv("DB_PORT", "5432")
-    db_database = os.getenv("DB_DATABASE", "mydatabase")
+    db_database = os.getenv("DB_NAME", "mydatabase")
     
     sqlalchemy_uri = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_database}"
 

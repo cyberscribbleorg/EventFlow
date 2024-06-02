@@ -33,6 +33,7 @@ services:
     volumes:
       - ./superset/superset_config.py:/app/pythonpath/superset_config.py
       - ./superset/requirements.txt:/app/requirements.txt
+      - ./superset/setup.py:/app/setup.py
     depends_on:
       - postgres
     networks:
@@ -42,7 +43,8 @@ services:
       superset fab create-admin --username ${SUPERSET_ADMIN_USER} --firstname Superset --lastname Admin --email ${SUPERSET_ADMIN_EMAIL} --password ${SUPERSET_ADMIN_PASSWORD} &&
       superset db upgrade &&
       superset init &&
-      superset run -p ${SUPERSET_PORT} --with-threads -h 0.0.0.0
+      superset run -p ${SUPERSET_PORT} --with-threads -h 0.0.0.0 &&
+      python /app/setup.py
       "
 
   injector:
