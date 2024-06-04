@@ -9,8 +9,8 @@ COPY . /app
 # Set working directory
 WORKDIR /app
 
-# Ensure start-cron.sh is executable
-RUN chmod +x /app/start-cron.sh
+# install dependencies
+RUN pip install -r /app/requirements.txt
 
 # Start the cron service
-CMD ["/app/start-cron.sh"]
+# CMD ["/app/start-cron.sh"]
