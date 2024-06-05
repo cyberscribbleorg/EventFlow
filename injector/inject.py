@@ -5,7 +5,7 @@ import logging
 import sys
 from datetime import datetime, timedelta
 import requests
-from upload2pg import insert_event_if_not_exist, connect
+from upload2pg import insert_event_if_not_exist, connect_with_retry
 
 # Configure logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
@@ -164,7 +164,7 @@ def do_harvest_and_inject(conn):
 if __name__ == "__main__":
     logging.info("Starting the injector service...")
     load_config()
-    conn = connect(config)
+    conn = connect_with_retry(config)
     if conn:
         logging.info("Connected successfully...")
         do_harvest_and_inject(conn)

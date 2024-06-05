@@ -6,6 +6,18 @@ import json
 import os
 import sys
 import logging
+import time
+
+def connect_with_retry(config, retries=5, delay=5):
+    """Establish a connection to the PostgreSQL database with retries."""
+    for i in range(retries):
+        conn = connect(config)
+        if conn:
+            return conn
+        logging.error(f"Attempt {i+1} of {retries} failed. Retrying in {delay} seconds...")
+        time.sleep(delay)
+    logging.error(f"All {retries} connection attempts failed.")
+    return None
 
 def connect(config):
     try:
