@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres
-    container_name: my-postgres-db
+    container_name: db
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
@@ -36,24 +36,18 @@ services:
       - ./superset/superset_config.py:/app/pythonpath/superset_config.py
       - ./superset/requirements.txt:/app/requirements.txt
       - ./superset/setup.py:/app/setup.py
+      - ./superset/wait_for_it.sh:/app/wait_for_it.sh 
+      - ./superset/entry_point.sh:/app/entry_point.sh 
     depends_on:
       - postgres
     networks:
       - superset-net
-    command: >
-      bash -c "
-      superset fab create-admin --username ${SUPERSET_ADMIN_USER} --firstname Superset --lastname Admin --email ${SUPERSET_ADMIN_EMAIL} --password ${SUPERSET_ADMIN_PASSWORD} &&
-      superset db upgrade &&
-      superset init &&
-      superset run -p ${SUPERSET_PORT} --with-threads -h 0.0.0.0 &&
-      python /app/setup.py
-      "
 
   injector:
     build:
       context: ./injector
       dockerfile: Dockerfile
-    container_name: data-injector
+    container_name: injector
     volumes:
       - ./data:/data
       - ./injector:/app
