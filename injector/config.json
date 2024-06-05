@@ -1,7 +1,6 @@
 {
-    "start_date": "2015-01-10",
-    "end_date": "2015-01-15",
-    "users": ["user1", "user2", "user3"],
-    "projects": ["proj1", "proj2", "proj3"],
-    "orgs": ["org1", "org2", "org3"]
+    "start_date": "2022-12-01",
+    "end_date": "2024-04-01",
+    "users": ["username"],
+    "projects": ["org/repo"]
 }
