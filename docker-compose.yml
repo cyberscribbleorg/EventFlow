@@ -35,7 +35,6 @@ services:
     volumes:
       - ./superset/superset_config.py:/app/pythonpath/superset_config.py
       - ./superset/requirements.txt:/app/requirements.txt
-      - ./superset/setup.py:/app/setup.py
       - ./superset/wait_for_it.sh:/app/wait_for_it.sh 
       - ./superset/entry_point.sh:/app/entry_point.sh 
     depends_on:
