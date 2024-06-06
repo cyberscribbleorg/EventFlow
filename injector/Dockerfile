@@ -1,7 +1,7 @@
-FROM python:3.8-slim
+FROM python:3.8.19-bookworm
 
 # Install cron
-RUN apt-get update && apt-get install -y cron libpq-dev gcc
+RUN apt update  -y && apt install -y cron libpq-dev gcc
 
 # Copy application files
 COPY . /app
