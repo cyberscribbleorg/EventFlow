@@ -1,4 +1,29 @@
 services:
+  redis:
+    image: "redis:latest"
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - superset-net
+  celery:
+    build:
+      context: ./injector
+      dockerfile: Dockerfile.celery
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./injector/:/app
+      - ./data:/data
+    networks:
+      - superset-net
   postgres:
     image: postgres
     container_name: db
@@ -60,7 +85,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
-    command: ["python", "/app/inject.py"] 
+    command: ["python", "init_harvest.py"] 
 
 networks:
   superset-net:
