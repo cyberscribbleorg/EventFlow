@@ -33,7 +33,6 @@ def load_config():
     config['password'] = os.getenv("DB_PASS", config.get('password', "password"))
     config['host'] = os.getenv("DB_HOST", config.get('host', "localhost"))
     config['port'] = os.getenv("DB_PORT", config.get('port', "5432"))
-    print(config)
 
 def filter_event(event):
     """Filter event based on config criteria."""
