@@ -15,3 +15,13 @@ def load_config():
     config['port'] = os.getenv("DB_PORT", config.get('port', "5432"))
     
     return config
+
+def get_download_folder():
+    return "/data/downloads"
+
+def get_errror_folder():
+    return "/data/error"
+
+def get_download_limit():
+    limit = os.getenv("INJECTOR_DOWNLOAD_QUEUE_LIMIT", "5")
+    return limit

@@ -2,12 +2,12 @@ from celery_app import app
 import logging
 import gzip
 import os
-from utils import load_config
+from utils import load_config, get_download_folder, get_errror_folder
 
 from tasks.do_inject import do_inject
 
-DOWNLOAD_FOLDER = '/data/downloads'
-MISSED_FOLDER = '/data/error'
+DOWNLOAD_FOLDER = get_download_folder()
+MISSED_FOLDER = get_errror_folder()
 
 @app.task(bind=True)
 def do_extract(self, file_name):

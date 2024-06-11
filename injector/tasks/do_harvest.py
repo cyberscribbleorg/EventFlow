@@ -3,13 +3,13 @@ import logging
 import os
 import requests
 from datetime import datetime, timedelta
-from utils import load_config
+from utils import load_config, get_download_folder, get_download_limit
 import time
 
 from tasks.do_extract import do_extract
 
 
-DOWNLOAD_FOLDER = '/data/downloads'
+DOWNLOAD_FOLDER = get_download_folder()
 TRACKING_FILE = os.path.join(DOWNLOAD_FOLDER, 'harvest.track')
 
 @app.task(bind=True)
@@ -52,8 +52,8 @@ def do_harvest(self):
 
                     # Check the number of files in the download folder
                     num_files = len([name for name in os.listdir(DOWNLOAD_FOLDER) if os.path.isfile(os.path.join(DOWNLOAD_FOLDER, name))])
-                    if num_files >= 10:
-                        logging.info("10 files downloaded. Sleeping for 30 seconds.")
+                    if num_files >= int(get_download_limit()):
+                        logging.info(f"{get_download_limit()} files downloaded. Sleeping for 30 seconds.")
                         time.sleep(30)  # Sleep for 30s
 
                 else:

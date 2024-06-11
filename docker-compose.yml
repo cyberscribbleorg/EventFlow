@@ -16,6 +16,11 @@ services:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
+      INJECTOR_HIGH_PRIORITY_WORKERS: ${INJECTOR_HIGH_PRIORITY_WORKERS}
+      INJECTOR_MEDIUM_PRIORITY_WORKERS: ${INJECTOR_MEDIUM_PRIORITY_WORKERS}
+      INJECTOR_LOW_PRIORITY_WORKERS: ${INJECTOR_LOW_PRIORITY_WORKERS}
+      INJECTOR_WORKER_CONCURRENCY: ${INJECTOR_WORKER_CONCURRENCY}
+      INJECTOR_DOWNLOAD_QUEUE_LIMIT: ${INJECTOR_DOWNLOAD_QUEUE_LIMIT}
     depends_on:
       - redis
       - postgres
@@ -77,6 +82,8 @@ services:
       - ./injector:/app
     depends_on:
       - postgres
+      - redis
+      - celery
     networks:
       - superset-net
     environment:
