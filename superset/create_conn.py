@@ -7,10 +7,10 @@ from superset_client import SupersetClient
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-admin_username = os.getenv('SUPERSET_ADMIN_USERNAME', 'admin')
+admin_username = os.getenv('SUPERSET_ADMIN_USER', 'admin')
 admin_password = os.getenv('SUPERSET_ADMIN_PASSWORD', 'admin')
 
-superset_host = os.getenv('SUPERSET_HOST', 'localhost')
+superset_host = os.getenv('SUPERSET_HOST', '127.0.0.1')
 superset_port = os.getenv('SUPERSET_PORT', '8088')
 superset_url = f'http://{superset_host}:{superset_port}'
 
