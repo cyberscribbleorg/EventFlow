@@ -42,7 +42,7 @@ services:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-    command: -p 5433
+    command: -p ${DB_PORT}
     networks:
       - superset-net
 

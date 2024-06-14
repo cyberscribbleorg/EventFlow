@@ -22,8 +22,11 @@ def connect_with_retry(config, retries=5, delay=5):
 def connect(config):
     try:
         conn = psycopg2.connect(
-            dbname='postgres', user=config['username'],
-            password=config['password'], host=config['host']
+            dbname='postgres',
+            user=config['username'],
+            password=config['password'],
+            host=config['host'],
+            port=config['port']
         )
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = conn.cursor()
@@ -43,7 +46,8 @@ def connect(config):
         conn.close()
         conn = psycopg2.connect(
             dbname=config['db'], user=config['username'],
-            password=config['password'], host=config['host']
+            password=config['password'], host=config['host'],
+            port=config['port']
         )
         cursor = conn.cursor()
 
