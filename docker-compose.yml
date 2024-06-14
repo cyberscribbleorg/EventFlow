@@ -36,10 +36,13 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
+    expose:
+      - "${DB_PORT}"
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+    command: -p 5433
     networks:
       - superset-net
 
@@ -49,7 +52,7 @@ services:
       dockerfile: Dockerfile
     container_name: superset
     ports:
-      - "${SUPERSET_PORT}:8088"
+      - "${SUPERSET_PORT}:${SUPERSET_PORT}"
     environment:
       SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
       DB_USER: ${DB_USER}
