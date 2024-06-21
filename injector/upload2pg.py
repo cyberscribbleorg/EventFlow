@@ -22,6 +22,28 @@ def connect_with_retry(config, retries=5, delay=5):
 def connect(config):
     try:
         conn = psycopg2.connect(
+            dbname=config['db'],
+            user=config['username'],
+            password=config['password'],
+            host=config['host'],
+            port=config['port']
+        )
+        return conn
+    except psycopg2.Error as e:
+        logging.error(f"Connection to database failed: {e}")
+        return None
+
+def disconnect(conn):
+    if conn:
+        try:
+            conn.close()
+            logging.info("Database connection closed.")
+        except Exception as e:
+            logging.error(f"Failed to close the connection: {e}")
+
+def create_db(config):
+    try:
+        conn = psycopg2.connect(
             dbname='postgres',
             user=config['username'],
             password=config['password'],
@@ -40,17 +62,18 @@ def connect(config):
                 sql.SQL("CREATE DATABASE {}").format(sql.Identifier(config['db']))
             )
             logging.info(f"Database '{config['db']}' created successfully.")
+            return True
         else:
             logging.info(f"Database '{config['db']}' already exists.")
+            return True
 
-        conn.close()
-        conn = psycopg2.connect(
-            dbname=config['db'], user=config['username'],
-            password=config['password'], host=config['host'],
-            port=config['port']
-        )
+    except psycopg2.Error as e:
+        logging.error(f"Database creation check failed: {e}")
+        return False
+
+def initialize_tables(conn):
+    try:
         cursor = conn.cursor()
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS actors (
                 id BIGINT PRIMARY KEY,
@@ -91,22 +114,56 @@ def connect(config):
                 org_id BIGINT REFERENCES orgs(id)
             );
         """)
-        conn.commit()
-        return conn
-    except psycopg2.Error as e:
-        logging.error(f"Database or cursor operation failed: {e}")
-        return None
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        return None
 
-def disconnect(conn):
-    if conn:
-        try:
-            conn.close()
-            logging.info("Database connection closed.")
-        except Exception as e:
-            logging.error(f"Failed to close the connection: {e}")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS eventconfig (
+                start_date DATE,
+                end_date DATE,
+                users TEXT[],
+                projects TEXT[]
+            );
+        """)
+        conn.commit()
+    except psycopg2.Error as e:
+        logging.error(f"Table creation failed: {e}")
+
+def insert_eventconfig(conn, config):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM eventconfig")
+        count = cursor.fetchone()[0]
+
+        if count == 0:
+            cursor.execute("""
+                INSERT INTO eventconfig (start_date, end_date, users, projects)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                datetime.strptime(config['start_date'], '%Y-%m-%d').date(),
+                datetime.strptime(config['end_date'], '%Y-%m-%d').date(),
+                config['users'],
+                config['projects']
+            ))
+        else:
+            cursor.execute("""
+                UPDATE eventconfig
+                SET start_date = %s,
+                    end_date = %s,
+                    users = %s,
+                    projects = %s
+            """, (
+                datetime.strptime(config['start_date'], '%Y-%m-%d').date(),
+                datetime.strptime(config['end_date'], '%Y-%m-%d').date(),
+                config['users'],
+                config['projects']
+            ))
+
+        conn.commit()
+    except psycopg2.Error as e:
+        logging.error(f"Failed to insert or update eventconfig: {e}")
+        conn.rollback()
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        conn.rollback()
 
 def insert_event_if_not_exist(conn, event):
     try:
