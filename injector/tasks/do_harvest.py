@@ -50,11 +50,13 @@ def do_harvest(self):
                     logging.info(f"Successfully downloaded {file_name}")
                     do_extract.delay(file_name)
 
-                    # Check the number of files in the download folder
+                while True:
                     num_files = len([name for name in os.listdir(DOWNLOAD_FOLDER) if os.path.isfile(os.path.join(DOWNLOAD_FOLDER, name))])
                     if num_files >= int(get_download_limit()):
                         logging.info(f"{get_download_limit()} files downloaded. Sleeping for 30 seconds.")
-                        time.sleep(30)  # Sleep for 30s
+                        time.sleep(30)  # Sleep for 30 seconds
+                    else:
+                        break 
 
                 else:
                     logging.warning(f"Failed to download {file_name}, status code {response.status_code}")

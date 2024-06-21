@@ -1,5 +1,5 @@
 from celery_app import app
-from upload2pg import insert_event_if_not_exist, connect_with_retry
+from upload2pg import insert_event_if_not_exist, connect_with_retry, insert_events_bulk
 import logging
 import json
 from utils import load_config
@@ -17,13 +17,22 @@ def do_inject(self, file_path):
                 return False
 
             events = [json.loads(line.strip()) for line in lines]
-
-            for event in events:
-                if filter_event(event, config):
-                    insert_event_if_not_exist(conn, event)
-                    processed_count += 1
-            logging.info(f"Processed count {processed_count}")
-            return True
+            mode = config.get('mode', '@')
+            if mode == '@':
+                filtered_events = []
+                for event in events:
+                    if filter_event(event, config):
+                        filtered_events.append(event)
+                        processed_count += 1
+                insert_events_bulk(conn, filtered_events)
+                logging.info(f"Processed count {processed_count}")
+                return True
+            else:
+                insert_events_bulk(conn, events)
+                processed_count = len(events)
+                logging.info(f"Processed count {processed_count}")
+                return True
+                
     except json.JSONDecodeError as e:
         logging.error(f"JSON decoding error in file {file_path}: {e}")
     except IOError as e:
@@ -36,15 +45,18 @@ def do_inject(self, file_path):
     return False
 
 def filter_event(event, config):
-    users = config.get('users', [])
-    projects = config.get('projects', [])
+    mode = config.get('mode', '@')
+    if mode == '@':
+        users = config.get('users', [])
+        projects = config.get('projects', [])
 
-    actor = event['actor']['login']
-    repo_name = event['repo']['name']
+        actor = event['actor']['login']
+        repo_name = event['repo']['name']
 
-    if users and actor in users:
-        return True
-    if projects and repo_name in projects:
-        return True
-
-    return False   
+        if users and actor in users:
+            return True
+        if projects and repo_name in projects:
+            return True
+        return False
+    else:
+        return True 
