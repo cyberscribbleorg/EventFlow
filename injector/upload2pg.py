@@ -235,5 +235,86 @@ def insert_event_if_not_exist(conn, event):
         logging.error(f"An error occurred: {e}")
         conn.rollback()
     finally:
-        cursor.close()
+        conn.autocommit = True
+
+def insert_events_bulk(conn, events):
+    try:
+        cursor = conn.cursor()
+        conn.autocommit = False
+
+        insert_actor_sql = """
+            INSERT INTO actors (id, login, display_login, url, avatar_url)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO NOTHING
+        """
+
+        insert_repo_sql = """
+            INSERT INTO repos (id, name, url)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (id) DO NOTHING
+        """
+
+        insert_org_sql = """
+            INSERT INTO orgs (id, login, url, avatar_url)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (id) DO NOTHING
+        """
+
+        insert_event_sql = """
+            INSERT INTO events (id, type, actor_id, repo_id, payload, public, created_at, updated_at, org_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO NOTHING
+        """
+
+        actors_data = [
+            (event['actor'].get('id'),
+             event['actor'].get('login'),
+             event['actor'].get('display_login'),
+             event['actor'].get('url'),
+             event['actor'].get('avatar_url'))
+            for event in events
+        ]
+
+        repos_data = [
+            (event['repo'].get('id'),
+             event['repo'].get('name'),
+             event['repo'].get('url'))
+            for event in events
+        ]
+
+        orgs_data = [
+            (event['org'].get('id'),
+             event['org'].get('login'),
+             event['org'].get('url'),
+             event['org'].get('avatar_url'))
+            for event in events if 'org' in event
+        ]
+
+        events_data = [
+            (event.get('id'),
+             event.get('type'),
+             event['actor'].get('id'),
+             event['repo'].get('id'),
+             json.dumps(event.get('payload', {})),
+             event.get('public'),
+             datetime.strptime(event.get('created_at', '1970-01-01T00:00:00Z'), '%Y-%m-%dT%H:%M:%SZ'),
+             datetime.now(),
+             event['org'].get('id') if 'org' in event else None)
+            for event in events
+        ]
+
+        cursor.executemany(insert_actor_sql, actors_data)
+        cursor.executemany(insert_repo_sql, repos_data)
+        if orgs_data:
+            cursor.executemany(insert_org_sql, orgs_data)
+        cursor.executemany(insert_event_sql, events_data)
+
+        conn.commit()
+    except psycopg2.Error as e:
+        logging.error(f"An error occurred during database operation: {e}")
+        conn.rollback()
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        conn.rollback()
+    finally:
         conn.autocommit = True
