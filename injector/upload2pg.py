@@ -120,7 +120,8 @@ def initialize_tables(conn):
                 start_date DATE,
                 end_date DATE,
                 users TEXT[],
-                projects TEXT[]
+                projects TEXT[],
+                mode TEXT
             );
         """)
         conn.commit()
@@ -135,13 +136,14 @@ def insert_eventconfig(conn, config):
 
         if count == 0:
             cursor.execute("""
-                INSERT INTO eventconfig (start_date, end_date, users, projects)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO eventconfig (start_date, end_date, users, projects, mode)
+                VALUES (%s, %s, %s, %s, %s)
             """, (
                 datetime.strptime(config['start_date'], '%Y-%m-%d').date(),
                 datetime.strptime(config['end_date'], '%Y-%m-%d').date(),
                 config['users'],
-                config['projects']
+                config['projects'],
+                config['mode']
             ))
         else:
             cursor.execute("""
@@ -149,14 +151,15 @@ def insert_eventconfig(conn, config):
                 SET start_date = %s,
                     end_date = %s,
                     users = %s,
-                    projects = %s
+                    projects = %s,
+                    mode = %s
             """, (
                 datetime.strptime(config['start_date'], '%Y-%m-%d').date(),
                 datetime.strptime(config['end_date'], '%Y-%m-%d').date(),
                 config['users'],
-                config['projects']
+                config['projects'],
+                config['mode']
             ))
-
         conn.commit()
     except psycopg2.Error as e:
         logging.error(f"Failed to insert or update eventconfig: {e}")
