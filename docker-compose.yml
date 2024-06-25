@@ -1,9 +1,9 @@
 services:
   redis:
-    image: "redis:latest"
+    image: "redis:7.0"
     container_name: redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     networks:
       - superset-net
   celery:
@@ -30,16 +30,14 @@ services:
     networks:
       - superset-net
   postgres:
-    image: postgres
+    image: "postgres:16.3"
     container_name: db
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
-    expose:
-      - "${DB_PORT}"
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      - "127.0.0.1:${DB_PORT}:${DB_PORT}"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     command: -p ${DB_PORT}
@@ -52,7 +50,7 @@ services:
       dockerfile: Dockerfile
     container_name: superset
     ports:
-      - "${SUPERSET_PORT}:${SUPERSET_PORT}"
+      - "127.0.0.1:${SUPERSET_PORT}:${SUPERSET_PORT}"
     environment:
       SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
       DB_USER: ${DB_USER}
@@ -70,6 +68,7 @@ services:
       - ./superset/requirements.txt:/app/requirements.txt
       - ./superset/wait_for_it.sh:/app/wait_for_it.sh 
       - ./superset/entry_point.sh:/app/entry_point.sh 
+      - ./superset/branding:/app/branding/static/branding
     depends_on:
       - postgres
     networks:
@@ -96,6 +95,18 @@ services:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
     command: ["python", "init_harvest.py"] 
+
+  nginx:
+    image: nginx:1.27
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - superset
+    networks:
+      - superset-net
 
 networks:
   superset-net:
