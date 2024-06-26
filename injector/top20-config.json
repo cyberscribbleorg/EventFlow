@@ -1,0 +1,7 @@
+{
+    "start_date": "2024-05-01",
+    "end_date": "2024-05-31",
+    "users": ["torvalds", "mojombo", "defunkt", "paulmillr", "addyosmani", "mdo", "bevacqua", "tj", "gaearon", "jashkenas", "yyx990803", "mxcl", "chrisbanes", "bkeepers", "fabpot", "daimajia", "johnpapa", "nvie", "antirez", "mitsuhiko"],
+    "projects": ["torvalds/linux", "rails/rails", "facebook/react", "twbs/bootstrap", "d3/d3", "angular/angular.js", "nodejs/node", "bitcoin/bitcoin", "apple/swift", "tensorflow/tensorflow", "vuejs/vue", "rust-lang/rust", "microsoft/vscode", "atom/atom", "lodash/lodash", "kubernetes/kubernetes", "django/django", "apache/spark", "ansible/ansible", "laravel/laravel", "keras-team/keras", "pytorch/pytorch", "tensorflow/models", "opencv/opencv", "scikit-learn/scikit-learn"],
+    "mode": "@"
+}
