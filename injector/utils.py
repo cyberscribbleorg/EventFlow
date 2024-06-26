@@ -19,7 +19,7 @@ def load_config():
 def get_download_folder():
     return "/data/downloads"
 
-def get_errror_folder():
+def get_error_folder():
     return "/data/error"
 
 def get_download_limit():

@@ -1,62 +1,75 @@
 from celery_app import app
 from upload2pg import insert_event_if_not_exist, connect_with_retry, insert_events_bulk
 import logging
+from upload2pg import disconnect
 import json
 from utils import load_config
+import logging
+
 
 @app.task(bind=True)
 def do_inject(self, file_path):
     config = load_config()
-    conn = connect_with_retry(config)
-    processed_count = 0
+    conn = None
+    batch_size = 5000  # Define the batch size
     try:
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-            if not lines:
-                logging.warning(f"Empty file..skipping..: {file_path}")
-                return False
+        conn = connect_with_retry(config)
+        processed_count = 0
 
-            events = [json.loads(line.strip()) for line in lines]
-            mode = config.get('mode', '@')
-            if mode == '@':
-                filtered_events = []
-                for event in events:
-                    if filter_event(event, config):
-                        filtered_events.append(event)
-                        processed_count += 1
-                insert_events_bulk(conn, filtered_events)
-                logging.info(f"Processed count {processed_count}")
-                return True
-            else:
-                insert_events_bulk(conn, events)
-                processed_count = len(events)
-                logging.info(f"Processed count {processed_count}")
-                return True
+        with open(file_path, 'r') as file:
+            batch = []
+            for line in file:
+                if line.strip():
+                    try:
+                        event = json.loads(line.strip())
+                        batch.append(event)
+                    except json.JSONDecodeError as e:
+                        logging.error(f"JSON decoding error in file {file_path} on line {line}: {e}")
+                        continue
+
+                if len(batch) >= batch_size:
+                    processed_count += process_batch(conn, batch, config)
+                    batch = []
+
+            # Process the remaining lines in the last batch
+            if batch:
+                processed_count += process_batch(conn, batch, config)
+
+        logging.info(f"Processed count {processed_count}")
+        disconnect(conn)
+        return True
                 
-    except json.JSONDecodeError as e:
-        logging.error(f"JSON decoding error in file {file_path}: {e}")
     except IOError as e:
         logging.error(f"IO error while reading file {file_path}: {e}")
     except Exception as e:
         logging.error(f"Unexpected error processing file {file_path}: {e}")
     finally:
-        conn.close()
-        logging.info("Database connection closed.")
+        if conn:
+            disconnect(conn)  # Ensure connection is closed in case of exceptions
+            logging.info("Database connection closed.")
+
     return False
 
-def filter_event(event, config):
+def process_batch(conn, batch, config):
     mode = config.get('mode', '@')
     if mode == '@':
-        users = config.get('users', [])
-        projects = config.get('projects', [])
-
-        actor = event['actor']['login']
-        repo_name = event['repo']['name']
-
-        if users and actor in users:
-            return True
-        if projects and repo_name in projects:
-            return True
-        return False
+        filtered_events = [event for event in batch if filter_event(event, config)]
+        insert_events_bulk(conn, filtered_events)
+        return len(filtered_events)
     else:
-        return True 
+        insert_events_bulk(conn, batch)
+        return len(batch)
+    
+def filter_event(event, config):
+    users = config.get('users', [])
+    projects = config.get('projects', [])
+
+    actor = event['actor']['login']
+    repo_name = event['repo']['name']
+
+    if users and actor in users:
+        return True
+    if projects and repo_name in projects:
+        return True
+    
+    return False
