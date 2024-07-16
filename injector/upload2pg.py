@@ -179,11 +179,11 @@ def insert_event_if_not_exist(conn, event):
             VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (id) DO NOTHING
         """, (
-            event['actor'].get('id'),
-            event['actor'].get('login'),
-            event['actor'].get('display_login'),
-            event['actor'].get('url'),
-            event['actor'].get('avatar_url')
+            event.get('actor', {}).get('id', None),
+            event.get('actor', {}).get('login', None),
+            event.get('actor', {}).get('display_login', None),
+            event.get('actor', {}).get('url', None),
+            event.get('actor', {}).get('avatar_url', None)
         ))
 
         # Insert repo
@@ -192,9 +192,9 @@ def insert_event_if_not_exist(conn, event):
             VALUES (%s, %s, %s)
             ON CONFLICT (id) DO NOTHING
         """, (
-            event['repo'].get('id'),
-            event['repo'].get('name'),
-            event['repo'].get('url')
+            event.get('repo', {}).get('id', None),
+            event.get('repo', {}).get('name', None),
+            event.get('repo', {}).get('url', None)
         ))
 
         # Insert org if exists
@@ -204,10 +204,10 @@ def insert_event_if_not_exist(conn, event):
                 VALUES (%s, %s, %s, %s)
                 ON CONFLICT (id) DO NOTHING
             """, (
-                event['org'].get('id'),
-                event['org'].get('login'),
-                event['org'].get('url'),
-                event['org'].get('avatar_url')
+                event.get('org', {}).get('id', None),
+                event.get('org', {}).get('login', None),
+                event.get('org', {}).get('url', None),
+                event.get('org', {}).get('avatar_url', None)
             ))
 
         # Insert event
@@ -216,15 +216,15 @@ def insert_event_if_not_exist(conn, event):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO NOTHING
         """, (
-            event.get('id'),
-            event.get('type'),
-            event['actor'].get('id'),
-            event['repo'].get('id'),
+            event.get('id', None),
+            event.get('type', None),
+            event.get('actor', {}).get('id', None),
+            event.get('repo', {}).get('id', None),
             json.dumps(event.get('payload', {})),
-            event.get('public'),
+            event.get('public', None),
             datetime.strptime(event.get('created_at', '1970-01-01T00:00:00Z'), '%Y-%m-%dT%H:%M:%SZ'),
             datetime.now(),
-            event['org'].get('id') if 'org' in event else None
+            event.get('org', {}).get('id', None) if 'org' in event else None
         ))
 
         conn.commit()
@@ -268,39 +268,39 @@ def insert_events_bulk(conn, events):
 
         actors_data = [
             (event['actor'].get('id'),
-             event['actor'].get('login'),
-             event['actor'].get('display_login'),
-             event['actor'].get('url'),
-             event['actor'].get('avatar_url'))
-            for event in events
+             event['actor'].get('login', None),
+             event['actor'].get('display_login', None),
+             event['actor'].get('url', None),
+             event['actor'].get('avatar_url', None))
+            for event in events if 'actor' in event and 'id' in event['actor']
         ]
 
         repos_data = [
             (event['repo'].get('id'),
-             event['repo'].get('name'),
-             event['repo'].get('url'))
-            for event in events
+             event['repo'].get('name', None),
+             event['repo'].get('url', None))
+            for event in events if 'repo' in event and 'id' in event['repo']
         ]
 
         orgs_data = [
             (event['org'].get('id'),
-             event['org'].get('login'),
-             event['org'].get('url'),
-             event['org'].get('avatar_url'))
-            for event in events if 'org' in event
+             event['org'].get('login', None),
+             event['org'].get('url', None),
+             event['org'].get('avatar_url', None))
+            for event in events if 'org' in event and 'id' in event['org']
         ]
 
         events_data = [
             (event.get('id'),
-             event.get('type'),
-             event['actor'].get('id'),
-             event['repo'].get('id'),
+             event.get('type', None),
+             event['actor'].get('id') if 'actor' in event else None,
+             event['repo'].get('id') if 'repo' in event else None,
              json.dumps(event.get('payload', {})),
-             event.get('public'),
+             event.get('public', None),
              datetime.strptime(event.get('created_at', '1970-01-01T00:00:00Z'), '%Y-%m-%dT%H:%M:%SZ'),
              datetime.now(),
              event['org'].get('id') if 'org' in event else None)
-            for event in events
+            for event in events if 'id' in event
         ]
 
         cursor.executemany(insert_actor_sql, actors_data)
