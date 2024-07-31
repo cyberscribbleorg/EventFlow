@@ -39,7 +39,7 @@ services:
     ports:
       - "127.0.0.1:${DB_PORT}:${DB_PORT}"
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     command: -p ${DB_PORT}
     networks:
       - superset-net
@@ -111,3 +111,7 @@ services:
 networks:
   superset-net:
     name: superset-net
+
+volumes:
+  pgdata:
+    driver: local
